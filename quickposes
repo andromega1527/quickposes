@@ -1,0 +1,50 @@
+#!/usr/bin/bash
+
+echo Starting session...
+
+path="../images"
+width=1366
+heigh=768
+time="$1"
+num_images="$2"
+count=0
+pass_numbers=()
+
+if [[ -z "$1" ]]; then
+    time=60
+fi
+
+if [[ -z "$2" ]]; then
+    num_images=20
+fi
+
+while [[ $count -lt $num_images ]]; do
+    is_new_number=1
+    while [[ $is_new_number -ne 0 ]]; do
+        random=$(($RANDOM % 1505))
+        is_new_number=0
+        for pass_number in ${pass_numbers[@]}; do
+            if [[ $random -eq $pass_number ]]; then
+                is_new_number=1
+                break
+            fi
+        done
+    done
+
+    echo "image: $(($count+1))"
+    convert -resize $(($width / 2))"x"$heigh $path/sla$random.jpg - | display -geometry +0+0 &
+    if [[ $? -ne 0 ]]; then
+        pass_numbers+=($random)
+        continue
+    fi
+
+    sleep $time
+    kill $(jobs -l | awk 'getline(2) { print $1 }')
+    jobs > /dev/null
+    count=$(($count+1))
+    pass_numbers+=($random)
+done
+
+echo "Finishi session"
+
+exit 0
